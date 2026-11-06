@@ -4,6 +4,8 @@
 
 Galvez, Ron John · Gerolaga, Venz · Metrillo, Brian David · Romero, John Mark
 
+**Code and results:** <https://github.com/Shujimaki/cpecog2-transfer-minilab>
+
 ## Setup
 
 - **Dataset:** TF Flowers, 5 classes (daisy, dandelion, roses, sunflowers, tulips), 300 images per class.
