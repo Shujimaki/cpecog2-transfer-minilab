@@ -1,5 +1,3 @@
-"""Figures: accuracy vs training-set size, training curves, and a confusion matrix."""
-
 import matplotlib
 
 matplotlib.use("Agg")
@@ -39,7 +37,6 @@ def accuracy_vs_size(results: pd.DataFrame, path) -> None:
 
 
 def training_curves(history: dict, title: str, path) -> None:
-    """2x2 layout like LBYCPH3 Activity 5: training loss/accuracy on top, validation below."""
     epochs = range(1, len(history["train_loss"]) + 1)
     fig, axes = plt.subplots(2, 2, figsize=(8, 6), constrained_layout=True)
     panels = [("train_loss", "Training loss"), ("train_acc", "Training accuracy"),

@@ -61,7 +61,7 @@ Add `--quick` for a short test run. Results go to `results/`:
 | Keras (LBYCPH3) | PyTorch (here) |
 |---|---|
 | `base.trainable = False` | `p.requires_grad = False` |
-| `base(x, training=False)` | `freeze_batchnorm(model)` |
+| `base(x, training=False)` | `set_train_mode(model, freeze_bn_stats=True)` |
 | Recompile with a lower learning rate | New optimizer with per-layer learning rates |
 
 PyTorch is used because it runs on the Mac GPU (MPS). TensorFlow would run on the CPU only.

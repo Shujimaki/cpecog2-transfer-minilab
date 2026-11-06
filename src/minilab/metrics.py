@@ -1,5 +1,3 @@
-"""Evaluation: accuracy, macro-F1, and the confusion matrix."""
-
 import torch
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 

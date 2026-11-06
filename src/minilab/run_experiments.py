@@ -18,6 +18,17 @@ from minilab.metrics import evaluate
 from minilab.train import fit
 
 
+def largest_fraction_table(results: pd.DataFrame) -> pd.DataFrame:
+    top = results[results.fraction == results.fraction.max()]
+    table = top.groupby("strategy", sort=False).agg(
+        accuracy=("accuracy", "mean"), macro_f1=("macro_f1", "mean"),
+        trainable_params=("trainable_params", "first"), train_time_s=("train_time_s", "mean"))
+    table.index = [plots.LABELS[s] for s in table.index]
+    # to_markdown prints int columns of a mixed frame as floats (10245.000)
+    table["trainable_params"] = table["trainable_params"].map("{:,}".format)
+    return table
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--strategies", nargs="+", default=C.STRATEGIES, choices=C.STRATEGIES)
@@ -52,7 +63,7 @@ def main() -> None:
                 rows.append(row)
                 print(f"  test accuracy {row['accuracy']:.3f}  macro-F1 {row['macro_f1']:.3f}  "
                       f"trainable {trainable:,}  time {seconds:.1f}s")
-                pd.DataFrame(rows).to_csv(out_dir / "results.csv", index=False)  # save as we go
+                pd.DataFrame(rows).to_csv(out_dir / "results.csv", index=False)
 
                 if best is None or row["accuracy"] > best[0]["accuracy"]:
                     best = (row, scores["confusion"], history)
@@ -60,14 +71,8 @@ def main() -> None:
     results = pd.DataFrame(rows)
     plots.accuracy_vs_size(results, out_dir / "accuracy_vs_size.png")
 
-    # Step 3 table: the runs on the largest training set.
-    top = results[results.fraction == results.fraction.max()]
-    table = top.groupby("strategy", sort=False).agg(
-        accuracy=("accuracy", "mean"), macro_f1=("macro_f1", "mean"),
-        trainable_params=("trainable_params", "first"), train_time_s=("train_time_s", "mean"))
-    table.index = [plots.LABELS[s] for s in table.index]
-    table["trainable_params"] = table["trainable_params"].map("{:,}".format)  # keep it an integer
-    (out_dir / "table.md").write_text(table.to_markdown(floatfmt=".3f", intfmt=",") + "\n")
+    table = largest_fraction_table(results)
+    (out_dir / "table.md").write_text(table.to_markdown(floatfmt=".3f") + "\n")
     print("\n" + table.to_string())
 
     row, cm, history = best

@@ -1,9 +1,3 @@
-"""Download the TF Flowers dataset, cap it, split it once, and serve DataLoaders.
-
-The first run decodes every image, resizes it to 224x224, and saves the result as a
-uint8 tensor in data/cache.pt. Later runs load that file in about a second.
-"""
-
 import random
 import tarfile
 import urllib.request
@@ -17,7 +11,6 @@ from minilab import config as C
 
 
 def download() -> None:
-    """Download and extract flower_photos.tgz into data/raw/ (skipped if already there)."""
     raw = C.DATA_DIR / "raw"
     if (raw / "flower_photos").exists():
         return
@@ -36,7 +29,6 @@ def _load_image(path) -> torch.Tensor:
 
 
 def build_cache() -> dict:
-    """Pick IMAGES_PER_CLASS images per class, split them, and save uint8 tensors."""
     cache_file = C.DATA_DIR / "cache.pt"
     if cache_file.exists():
         return torch.load(cache_file)
@@ -50,7 +42,6 @@ def build_cache() -> dict:
         paths += rng.sample(files, C.IMAGES_PER_CLASS)
         labels += [label] * C.IMAGES_PER_CLASS
 
-    # One fixed, stratified split. Every model and every train fraction uses it.
     train_frac, val_frac, test_frac = C.SPLIT
     p_train, p_rest, y_train, y_rest = train_test_split(
         paths, labels, train_size=train_frac, stratify=labels, random_state=C.SEED)
@@ -60,18 +51,13 @@ def build_cache() -> dict:
     print("Decoding and resizing images (first run only) ...")
     cache = {}
     for split, (p, y) in {"train": (p_train, y_train), "val": (p_val, y_val), "test": (p_test, y_test)}.items():
-        x = torch.stack([_load_image(f) for f in p]).permute(0, 3, 1, 2).contiguous()  # N, 3, H, W
+        x = torch.stack([_load_image(f) for f in p]).permute(0, 3, 1, 2).contiguous()
         cache[split] = (x, torch.tensor(y))
     torch.save(cache, cache_file)
     return cache
 
 
-def subset_train(x: torch.Tensor, y: torch.Tensor, fraction: float, seed: int = C.SEED):
-    """Take a stratified fraction of the training set.
-
-    The subsets are nested: the 10% subset is inside the 25% subset, and so on,
-    because each class is shuffled once and then cut at a different length.
-    """
+def nested_train_subset(x: torch.Tensor, y: torch.Tensor, fraction: float, seed: int = C.SEED):
     if fraction >= 1.0:
         return x, y
     g = torch.Generator().manual_seed(seed)
@@ -89,7 +75,6 @@ _STD = torch.tensor(C.IMAGENET_STD).view(1, 3, 1, 1)
 
 
 def prepare_batch(x_uint8: torch.Tensor, device, augment: bool) -> torch.Tensor:
-    """uint8 [0, 255] -> float, ImageNet-normalized, optional random horizontal flip."""
     x = x_uint8.to(device).float() / 255.0
     if augment:
         flip = torch.rand(x.shape[0], device=device) < 0.5
@@ -98,7 +83,7 @@ def prepare_batch(x_uint8: torch.Tensor, device, augment: bool) -> torch.Tensor:
 
 
 def make_loaders(cache: dict, fraction: float, seed: int = C.SEED):
-    x_train, y_train = subset_train(*cache["train"], fraction, seed)
+    x_train, y_train = nested_train_subset(*cache["train"], fraction, seed)
     g = torch.Generator().manual_seed(seed)
     train = DataLoader(TensorDataset(x_train, y_train), batch_size=C.BATCH_SIZE, shuffle=True, generator=g)
     val = DataLoader(TensorDataset(*cache["val"]), batch_size=C.BATCH_SIZE)
