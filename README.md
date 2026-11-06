@@ -7,7 +7,7 @@ This lab trains four models on a 5-class flower dataset:
 - ResNet-50 partial fine-tuning
 - ResNet-50 full fine-tuning
 
-Each model is trained on 10%, 25%, 50%, and 100% of the training data. The write-up is in [REPORT.md](REPORT.md).
+Each model is trained on 10%, 25%, 50%, and 100% of the training data. The write-up is in [REPORT.md](REPORT.md), and the IEEE-format paper is in [paper/paper.pdf](paper/paper.pdf).
 
 ## Dataset
 
